@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专注计时器 - 时间管理工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 28px;
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .timer-display {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .time {
+            font-size: 48px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status {
+            font-size: 18px;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .time-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .time-option {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .time-option:hover {
+            background: #edf2f7;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .time-option.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn.stop {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+        }
+
+        .btn.stop:hover {
+            box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .achievements {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .achievement {
+            background: white;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #48bb78;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .achievement.new {
+            border-left-color: #f6ad55;
+            animation: pulse 0.5s ease;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.5s ease;
+            z-index: 1001;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.encouragement {
+            background: linear-gradient(135deg, #f6ad55, #ed8936);
+            box-shadow: 0 4px 15px rgba(246, 173, 85, 0.3);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">⏰ 专注计时器</h1>
+        <p class="subtitle">专注工作，提升效率，获得奖励</p>
+
+
+
+        <div class="timer-display">
+            <div class="time" id="timer">00:00</div>
+            <div class="status" id="status">选择专注时间</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress"></div>
+            </div>
+        </div>
+
+        <div class="time-options">
+            <div class="time-option" data-time="5">5分钟</div>
+            <div class="time-option" data-time="10">10分钟</div>
+            <div class="time-option" data-time="15">15分钟</div>
+            <div class="time-option" data-time="30">30分钟</div>
+            <div class="time-option" data-time="45">45分钟</div>
+            <div class="time-option" data-time="60">60分钟</div>
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn" id="startBtn">开始专注</button>
+            <button class="btn stop" id="stopBtn" disabled>停止</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">今日专注次数</div>
+                <div class="stat-value" id="todaySessions">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">总专注时间</div>
+                <div class="stat-value" id="totalTime">0分钟</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">连续专注</div>
+                <div class="stat-value" id="streak">0天</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">获得奖励</div>
+                <div class="stat-value" id="rewards">0个</div>
+            </div>
+        </div>
+
+        <div class="achievements" id="achievements">
+            <h3>🏆 成就记录</h3>
+            <div id="achievementsList">
+                <div class="achievement">完成第一次专注即可获得成就！</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div id="notificationText">专注完成！</div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let gameState = {
+            selectedTime: 0,
+            currentTime: 0,
+            isRunning: false,
+            todaySessions: 0,
+            totalTime: 0,
+            streak: 0,
+            rewards: 0,
+            lastSessionDate: null
+        };
+
+        // 成就系统
+        const achievements = {
+            firstSession: { name: "初次专注", description: "完成第一次专注", unlocked: false },
+            fiveMinutes: { name: "快速专注", description: "完成5分钟专注", unlocked: false },
+            tenMinutes: { name: "短时专注", description: "完成10分钟专注", unlocked: false },
+            fifteenMinutes: { name: "标准专注", description: "完成15分钟专注", unlocked: false },
+            thirtyMinutes: { name: "中等专注", description: "完成30分钟专注", unlocked: false },
+            fortyFiveMinutes: { name: "延长专注", description: "完成45分钟专注", unlocked: false },
+            sixtyMinutes: { name: "深度专注", description: "完成60分钟专注", unlocked: false },
+            fiveSessions: { name: "专注达人", description: "完成5次专注", unlocked: false },
+            tenSessions: { name: "专注大师", description: "完成10次专注", unlocked: false },
+            streak3: { name: "连续专注", description: "连续3天专注", unlocked: false },
+            streak7: { name: "专注习惯", description: "连续7天专注", unlocked: false }
+        };
+
+        // 鼓励语录
+        const encouragementMessages = [
+            "专注是成功的关键，你已经做得很棒了！",
+            "每一次专注都是对自己最好的投资！",
+            "保持专注，你正在创造价值！",
+            "专注的力量超乎想象，继续加油！",
+            "每一个专注的时刻都在让你变得更强！",
+            "专注是一种习惯，你已经养成了好习惯！",
+            "专注让你更有效率，更有成就感！",
+            "专注是通往成功的捷径，你已经走在这条路上！",
+            "专注让时间更有价值，你已经掌握了这个秘密！",
+            "专注是一种能力，你已经具备了这种能力！"
+        ];
+
+        let timer = null;
+        let selectedTimeOption = null;
+
+        // 初始化
+        function init() {
+            loadGameState();
+            updateDisplay();
+            setupEventListeners();
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 时间选项点击
+            document.querySelectorAll('.time-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    selectTimeOption(option);
+                });
+            });
+
+            // 开始按钮
+            document.getElementById('startBtn').addEventListener('click', startTimer);
+            
+            // 停止按钮
+            document.getElementById('stopBtn').addEventListener('click', stopTimer);
+        }
+
+        // 选择时间选项
+        function selectTimeOption(option) {
+            // 移除之前的选择
+            if (selectedTimeOption) {
+                selectedTimeOption.classList.remove('selected');
+            }
+            
+            // 选择新的时间
+            option.classList.add('selected');
+            selectedTimeOption = option;
+            gameState.selectedTime = parseInt(option.dataset.time);
+            gameState.currentTime = gameState.selectedTime * 60;
+            
+            updateTimerDisplay();
+            document.getElementById('status').textContent = `准备专注 ${gameState.selectedTime} 分钟`;
+        }
+
+        // 开始计时器
+        function startTimer() {
+            if (gameState.selectedTime === 0) {
+                showNotification('请先选择专注时间！', 'encouragement');
+                return;
+            }
+
+            gameState.isRunning = true;
+            gameState.currentTime = gameState.selectedTime * 60;
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('status').textContent = '专注中...';
+            
+            // 显示鼓励消息
+            showRandomEncouragement();
+            
+            timer = setInterval(() => {
+                gameState.currentTime--;
+                updateTimerDisplay();
+                
+                if (gameState.currentTime <= 0) {
+                    completeSession();
+                }
+            }, 1000);
+        }
+
+        // 停止计时器
+        function stopTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            
+            gameState.isRunning = false;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('status').textContent = '专注已停止';
+            
+            showNotification('专注已停止，下次继续加油！', 'encouragement');
+        }
+
+        // 完成专注
+        function completeSession() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+            
+            gameState.isRunning = false;
+            gameState.todaySessions++;
+            gameState.totalTime += gameState.selectedTime;
+            gameState.rewards++;
+            
+            // 更新连续天数
+            const today = new Date().toDateString();
+            if (gameState.lastSessionDate !== today) {
+                if (gameState.lastSessionDate === new Date(Date.now() - 24*60*60*1000).toDateString()) {
+                    gameState.streak++;
+                } else {
+                    gameState.streak = 1;
+                }
+                gameState.lastSessionDate = today;
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('status').textContent = '专注完成！';
+            
+            // 检查成就
+            checkAchievements();
+            
+            // 显示完成通知
+            showNotification(`🎉 专注完成！获得奖励！`, '');
+            
+            // 显示鼓励消息
+            setTimeout(() => {
+                showRandomEncouragement();
+            }, 2000);
+            
+            updateDisplay();
+            saveGameState();
+        }
+
+        // 更新计时器显示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(gameState.currentTime / 60);
+            const seconds = gameState.currentTime % 60;
+            document.getElementById('timer').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // 更新进度条
+            const progress = ((gameState.selectedTime * 60 - gameState.currentTime) / (gameState.selectedTime * 60)) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        // 更新显示
+        function updateDisplay() {
+            document.getElementById('todaySessions').textContent = gameState.todaySessions;
+            document.getElementById('totalTime').textContent = gameState.totalTime + '分钟';
+            document.getElementById('streak').textContent = gameState.streak + '天';
+            document.getElementById('rewards').textContent = gameState.rewards + '个';
+        }
+
+        // 检查成就
+        function checkAchievements() {
+            // 初次专注
+            if (gameState.todaySessions === 1 && !achievements.firstSession.unlocked) {
+                unlockAchievement('firstSession', '初次专注', '完成第一次专注！');
+            }
+            
+            // 快速专注
+            if (gameState.selectedTime >= 5 && !achievements.fiveMinutes.unlocked) {
+                unlockAchievement('fiveMinutes', '快速专注', '完成5分钟专注！');
+            }
+            
+            // 短时专注
+            if (gameState.selectedTime >= 10 && !achievements.tenMinutes.unlocked) {
+                unlockAchievement('tenMinutes', '短时专注', '完成10分钟专注！');
+            }
+            
+            // 标准专注
+            if (gameState.selectedTime >= 15 && !achievements.fifteenMinutes.unlocked) {
+                unlockAchievement('fifteenMinutes', '标准专注', '完成15分钟专注！');
+            }
+            
+            // 中等专注
+            if (gameState.selectedTime >= 30 && !achievements.thirtyMinutes.unlocked) {
+                unlockAchievement('thirtyMinutes', '中等专注', '完成30分钟专注！');
+            }
+            
+            // 延长专注
+            if (gameState.selectedTime >= 45 && !achievements.fortyFiveMinutes.unlocked) {
+                unlockAchievement('fortyFiveMinutes', '延长专注', '完成45分钟专注！');
+            }
+            
+            // 深度专注
+            if (gameState.selectedTime >= 60 && !achievements.sixtyMinutes.unlocked) {
+                unlockAchievement('sixtyMinutes', '深度专注', '完成60分钟专注！');
+            }
+            
+            // 专注达人
+            if (gameState.todaySessions >= 5 && !achievements.fiveSessions.unlocked) {
+                unlockAchievement('fiveSessions', '专注达人', '完成5次专注！');
+            }
+            
+            // 专注大师
+            if (gameState.todaySessions >= 10 && !achievements.tenSessions.unlocked) {
+                unlockAchievement('tenSessions', '专注大师', '完成10次专注！');
+            }
+            
+            // 连续专注
+            if (gameState.streak >= 3 && !achievements.streak3.unlocked) {
+                unlockAchievement('streak3', '连续专注', '连续3天专注！');
+            }
+            
+            // 专注习惯
+            if (gameState.streak >= 7 && !achievements.streak7.unlocked) {
+                unlockAchievement('streak7', '专注习惯', '连续7天专注！');
+            }
+        }
+
+        // 解锁成就
+        function unlockAchievement(id, name, description) {
+            achievements[id].unlocked = true;
+            
+            const achievementsList = document.getElementById('achievementsList');
+            const achievementDiv = document.createElement('div');
+            achievementDiv.className = 'achievement new';
+            achievementDiv.textContent = `🏆 ${name}: ${description}`;
+            achievementsList.appendChild(achievementDiv);
+            
+            // 移除新成就的动画类
+            setTimeout(() => {
+                achievementDiv.classList.remove('new');
+            }, 500);
+            
+            showNotification(`🏆 解锁成就：${name}！`, '');
+        }
+
+        // 显示随机鼓励消息
+        function showRandomEncouragement() {
+            const message = encouragementMessages[Math.floor(Math.random() * encouragementMessages.length)];
+            showNotification(message, 'encouragement');
+        }
+
+        // 显示通知
+        function showNotification(text, type = '') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = text;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+
+
+        // 保存游戏状态
+        function saveGameState() {
+            localStorage.setItem('focusTimerState', JSON.stringify(gameState));
+            localStorage.setItem('focusTimerAchievements', JSON.stringify(achievements));
+        }
+
+        // 加载游戏状态
+        function loadGameState() {
+            const savedState = localStorage.getItem('focusTimerState');
+            const savedAchievements = localStorage.getItem('focusTimerAchievements');
+            
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                gameState = { ...gameState, ...parsedState };
+            }
+            
+            if (savedAchievements) {
+                const parsedAchievements = JSON.parse(savedAchievements);
+                Object.assign(achievements, parsedAchievements);
+            }
+            
+            // 检查是否是新的日期
+            const today = new Date().toDateString();
+            if (gameState.lastSessionDate !== today) {
+                gameState.todaySessions = 0;
+            }
+            
+            // 更新成就显示
+            updateAchievementsDisplay();
+        }
+
+        // 更新成就显示
+        function updateAchievementsDisplay() {
+            const achievementsList = document.getElementById('achievementsList');
+            achievementsList.innerHTML = '';
+            
+            let hasUnlocked = false;
+            for (let id in achievements) {
+                if (achievements[id].unlocked) {
+                    hasUnlocked = true;
+                    const achievementDiv = document.createElement('div');
+                    achievementDiv.className = 'achievement';
+                    achievementDiv.textContent = `🏆 ${achievements[id].name}: ${achievements[id].description}`;
+                    achievementsList.appendChild(achievementDiv);
+                }
+            }
+            
+            if (!hasUnlocked) {
+                const defaultDiv = document.createElement('div');
+                defaultDiv.className = 'achievement';
+                defaultDiv.textContent = '完成第一次专注即可获得成就！';
+                achievementsList.appendChild(defaultDiv);
+            }
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html> 
